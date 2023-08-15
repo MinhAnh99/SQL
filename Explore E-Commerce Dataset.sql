@@ -47,6 +47,7 @@ GROUP BY time, source
 
 --Query 04: Average number of pageviews by purchaser type (purchasers vs non-purchasers) in June, July 2017.
 
+
 WITH purchase AS (
     SELECT
       FORMAT_DATE('%Y%m',PARSE_DATE('%Y%m%d', date)) as month,
@@ -55,10 +56,11 @@ WITH purchase AS (
   UNNEST(hits) hits,
   UNNEST (hits.product) product
     WHERE _table_suffix between '0601' and '0731'
-    AND totals.transactions >= 1,
+    AND totals.transactions >= 1
     AND product.productRevenue IS NOT NULL
     GROUP BY month ),
-  non_purchase as (
+
+non_purchase as (
     SELECT
       FORMAT_DATE('%Y%m',PARSE_DATE('%Y%m%d', date)) as month,
       ROUND(sum(totals.pageviews)/count (distinct fullVisitorId),5) as age_pageviews_non_purchase
@@ -75,49 +77,31 @@ SELECT
   purchase.age_pageviews_purchase,
   non_purchase.age_pageviews_non_purchase
 FROM purchase
-JOIN non_purchase USING(month)
+LEFT JOIN non_purchase USING(month)
 
 --Query 05: Average number of transactions per user that made a purchase in July 2017
 
-WITH avg_num_transactions AS (
-    SELECT
-        FORMAT_DATE('%Y%m',PARSE_DATE('%Y%m%d',date)) as month,
-        fullVisitorId,
-        SUM (totals.transactions) AS total_transactions_per_user,
-    FROM `bigquery-public-data.google_analytics_sample.ga_sessions_201707*`,
-    UNNEST(hits) hits,
-    UNNEST (hits.product) product
-    WHERE productRevenue IS NOT NULL
-    GROUP BY fullVisitorId, month
-)
-
-SELECT 
-    month,
-    (SUM (total_transactions_per_user) / COUNT(fullVisitorId) ) AS avg_total_transactions_per_user
-FROM avg_num_transactions
-GROUP BY month
+SELECT
+    FORMAT_DATE("%Y%m",parse_date("%Y%m%d",date)) as month,
+    SUM(totals.transactions) / COUNT(DISTINCT fullvisitorid) as Avg_total_transactions_per_user
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_201707*`
+    ,UNNEST (hits) hits,
+    UNNEST(product) product
+WHERE totals.transactions>=1
+AND totals.totalTransactionRevenue is not null
+AND product.productRevenue is not null
+GROUP BY month;
 
 --Query 06: Average amount of money spent per session. Only include purchaser data in July 2017
 
-WITH avg_amount AS (
-  SELECT 
-    FORMAT_DATE('%Y%m', PARSE_DATE('%Y%m%d',date)) as month,
-    fullVisitorId,
-    SUM(totals.visits) AS total_visit,
-    SUM(product.productRevenue) AS total_revenue
-  FROM `bigquery-public-data.google_analytics_sample.ga_sessions_201707*`,
-  UNNEST(hits) hits,
-  UNNEST (hits.product) product
-    WHERE productRevenue IS NOT NULL
-    AND totals.transactions IS NOT NULL
-    AND totals.visits > 0
-    AND totals.totalTransactionRevenue IS NOT NULL
-    GROUP BY month, fullVisitorId
-)
-SELECT month,
-(SUM(total_revenue) / SUM(total_visit) /1000000) as avg_revenue_by_user_per_visit
-FROM avg_amount
-GROUP BY month
+SELECT
+    FORMAT_DATE("%Y%m",PARSE_DATE("%Y%m%d",DATE)) AS month,
+    ((SUM(product.productRevenue)/SUM(totals.visits))/POWER(10,6)) AS avg_revenue_by_user_per_visit
+from `bigquery-public-data.google_analytics_sample.ga_sessions_201707*`
+  ,UNNEST(hits) hits
+  ,UNNEST(product) product
+WHERE product.productRevenue is not null
+GROUP BY month;
 
 --Query 07: Other products purchased by customers who purchased product "YouTube Men's Vintage Henley" in July 2017. Output should show product name and the quantity was ordered.
 
