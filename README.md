@@ -80,6 +80,7 @@ Query results
 Query 08: Calculate cohort map from product view to addtocart to purchase in Jan, Feb and March 2017. For example, 100% product view then 40% add_to_cart and 10% purchase.
 
 SQL code
+
 WITH product_view as (
     SELECT
       FORMAT_DATE("%Y%m",PARSE_DATE('%Y%m%d',date)) as month,
