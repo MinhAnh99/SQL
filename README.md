@@ -99,7 +99,7 @@ In this project, I will write 08 query in Bigquery base on Google Analytics data
 
 -  SQL code
 
-WITH product_view as (
+``` WITH product_view as (
     SELECT
       FORMAT_DATE("%Y%m",PARSE_DATE('%Y%m%d',date)) as month,
       COUNT(product.productSKU) as num_product_view
@@ -147,6 +147,7 @@ FROM product_view
 JOIN addtocart USING(month)
 JOIN purchase USING(month)
 ORDER BY month
+```
 
 -  Query results
 
