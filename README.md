@@ -1,4 +1,4 @@
-# SQL - Explore E-Commerce Dataset
+# SQL - E-Commerce Dataset
 Apply Google BigQuery to execute queries to calculate a conversion rate, track visitor checkout progress.
 
 ## I. Introduction
